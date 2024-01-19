@@ -197,6 +197,7 @@ class Bot(httpx.Client):
                 count += 1
             else:
                 self.logger.critical(msg="ratelimit error")
+                exit()
             self.delay()
 
     def run(self, file):
