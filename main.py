@@ -129,7 +129,7 @@ class Bot(httpx.Client):
             account = resp.json().get('account_imports', [{}])[0]
             import_id = account.get('id', '')
             row_count = account.get('row_count', 0)
-            self.logger.info(f"File import with {row_count} rows")
+            self.logger.info(f"File Imported: {row_count} rows imported from file ")
             return import_id, row_count
 
         except Exception as e:
