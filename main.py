@@ -222,6 +222,6 @@ class Bot(httpx.Client):
 if __name__ == "__main__":
     email = input('[?] Email: ')
     password = getpass.getpass(prompt='[?] Password: ')
-    obj = Bot(email,password) #gktlah8aptwu4pu@jaywhit.top
+    obj = Bot(email,password) 
     file_path = input('[?] File_path? ')
     obj.run(file_path)
