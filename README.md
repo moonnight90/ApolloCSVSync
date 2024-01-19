@@ -1,4 +1,4 @@
-# Apollo Bot
+# ApolloCSVSync
 
 This Python script utilizes the Apollo API to automate the process of importing and analyzing CSV files into the Apollo platform. The script is designed to perform the following tasks:
 
