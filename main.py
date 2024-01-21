@@ -190,7 +190,7 @@ class Bot(httpx.Client):
         count = 1
         for chunk in self.chunks(model_ids, 25):
             # Add people to the specified list in chunks
-            if self.safety_check(model_ids):
+            if self.safety_check(chunk):
                 self.logger.info("Safety Check: PASS")
                 payload = {"owner_id": self.current_user_id, "label_names": [list_name], "entity_ids": chunk,
                         "account_id": None, "async": True, "analytics_context": "Searcher: Selected People",
