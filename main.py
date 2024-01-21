@@ -50,8 +50,8 @@ class Bot(httpx.Client):
     # Lambda functions for convenience
     chunks = lambda self, l, n: [l[i:i+n] for i in range(0, len(l), n)]
     file_name = lambda self, file_path: os.path.basename(file_path)
-    delay = lambda self: time.sleep(random.randint(2,5))
-
+    delay = lambda self: time.sleep(random.randint(4,5))
+    chache_key = lambda self: int(time.time()*1000)
     def login(self, email, password):
         # Attempt login
         login_payload = {
@@ -180,23 +180,34 @@ class Bot(httpx.Client):
         resp = self.post(self.BASE_URL + "mixed_people/search", json=payload)
         model_ids = resp.json().get('model_ids', [])
         return model_ids
-
+    def safety_check(self,model_ids):
+        payload = {"cacheKey":self.chache_key(),"emailer_campaign_id":None,"entity_ids":model_ids,
+                   "use_new_deployment_safety_check":True}
+        resp = self.post(self.BASE_URL+"mixed_people/safety_check",json=payload)
+        print(resp.status_code)
+        return True if resp.status_code == 200 else False
     def add_people_to_list(self, model_ids,list_name):
         count = 1
         for chunk in self.chunks(model_ids, 25):
             # Add people to the specified list in chunks
-            payload = {"owner_id": self.current_user_id, "label_names": [list_name], "entity_ids": chunk,
-                       "account_id": None, "async": True, "analytics_context": "Searcher: Selected People",
-                       "view_mode": "table", "export_csv": False, "include_guessed_emails": True,
-                       "update_existing_contacts_owner": False, "update_existing_contacts_account": False,
-                       "prospect_dangerous_account_stages": False, "cta_name": "Save People"}
+            if self.safety_check(model_ids):
+                self.logger.info("Safety Check: PASS")
+                payload = {"owner_id": self.current_user_id, "label_names": [list_name], "entity_ids": chunk,
+                        "account_id": None, "async": True, "analytics_context": "Searcher: Selected People",
+                        "view_mode": "table", "export_csv": False, "include_guessed_emails": True,
+                        "update_existing_contacts_owner": False, "update_existing_contacts_account": False,
+                        "prospect_dangerous_account_stages": False, "cta_name": "Save People","cacheKey":self.chache_key(),
+                        "signals":{"finder_view_id":"5b8050d050a3893c382e9360","pendo":"t6mU4Y6iEdhxX5MQid4c4G8N1hc"}}
 
-            resp = self.post(self.BASE_URL + "mixed_people/add_to_my_prospects", json=payload)
-            if resp.status_code == 200:
-                self.logger.info(f"{count * 25}/{len(model_ids)} people added to list...")
-                count += 1
+                resp = self.post(self.BASE_URL + "mixed_people/add_to_my_prospects", json=payload)
+                if resp.status_code == 200:
+                    self.logger.info(f"{count * 25}/{len(model_ids)} people added to list...")
+                    count += 1
+                else:
+                    self.logger.critical(msg="ratelimit error")
+                    exit()
             else:
-                self.logger.critical(msg="ratelimit error")
+                self.logger.critical(msg="Safety Check Fails")
                 exit()
             self.delay()
 
