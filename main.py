@@ -202,7 +202,6 @@ class Bot(httpx.Client):
                 resp = self.post(self.BASE_URL + "mixed_people/add_to_my_prospects", json=payload)
                 if resp.status_code == 200:
                     self.logger.info(f"{count * 25} people added to list...")
-                    count += 1
                 else:
                     self.logger.critical(msg="ratelimit error")
                     exit()
@@ -224,9 +223,9 @@ class Bot(httpx.Client):
             j_resp = resp.json()
             if resp.status_code == 200:
                 model_ids = j_resp.get('model_ids',[])
-                self.add_people_to_list(model_ids,list_name,)
+                self.add_people_to_list(model_ids,list_name,page)
                 total_page =  j_resp['pagination']['total_pages']
-                if total_page>=page:
+                if page>=total_page:
                     break
             elif resp.status_code == 422:
                 self.logger.info("Limit of pages exceeded...")
@@ -235,7 +234,7 @@ class Bot(httpx.Client):
             else:
                 self.logger.critical('Unexpected Error...')
                 exit()
-            
+            page+=1
     def run(self, file):
         # Execute the complete workflow
         try:
