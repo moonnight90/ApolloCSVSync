@@ -186,13 +186,13 @@ class Bot(httpx.Client):
         resp = self.post(self.BASE_URL+"mixed_people/safety_check",json=payload)
         print(resp.status_code)
         return True if resp.status_code == 200 else False
-    def add_people_to_list(self, model_ids,list_name):
-        count = 1
-        for chunk in self.chunks(model_ids, 25):
+    def add_people_to_list(self, model_ids,list_name,count):
+        # count = 1
+        # for chunk in self.chunks(model_ids, 25):
             # Add people to the specified list in chunks
-            if self.safety_check(chunk):
+            if self.safety_check(model_ids):
                 self.logger.info("Safety Check: PASS")
-                payload = {"owner_id": self.current_user_id, "label_names": [list_name], "entity_ids": chunk,
+                payload = {"owner_id": self.current_user_id, "label_names": [list_name], "entity_ids": model_ids,
                         "account_id": None, "async": True, "analytics_context": "Searcher: Selected People",
                         "view_mode": "table", "export_csv": False, "include_guessed_emails": True,
                         "update_existing_contacts_owner": False, "update_existing_contacts_account": False,
@@ -201,7 +201,7 @@ class Bot(httpx.Client):
 
                 resp = self.post(self.BASE_URL + "mixed_people/add_to_my_prospects", json=payload)
                 if resp.status_code == 200:
-                    self.logger.info(f"{count * 25}/{len(model_ids)} people added to list...")
+                    self.logger.info(f"{count * 25} people added to list...")
                     count += 1
                 else:
                     self.logger.critical(msg="ratelimit error")
@@ -210,7 +210,32 @@ class Bot(httpx.Client):
                 self.logger.critical(msg="Safety Check Fails")
                 exit()
             self.delay()
+    def go_through_list(self,q_id):
+        list_name = input('[?] List_name? ')
+        page = 1
+        while True:
+            payload = {"finder_table_layout_id":None,"finder_view_id":"5b8050d050a3893c382e9360",
+                    "q_search_list_id":q_id,"prospected_by_current_team":["no"],
+                    "page":page,"display_mode":"explorer_mode","per_page":25,"open_factor_names":["prospected_by_current_team"],
+                    "num_fetch_result":4,"context":"people-index-page","show_suggestions":False,
+                    "ui_finder_random_seed":"qe3filr8o","cacheKey":self.chache_key()}
+            resp = self.post(self.BASE_URL+"mixed_people/search",
+                             json=payload)
+            j_resp = resp.json()
+            if resp.status_code == 200:
+                model_ids = j_resp.get('model_ids',[])
+                self.add_people_to_list(model_ids,list_name,)
+                total_page =  j_resp['pagination']['total_pages']
+                if total_page>=page:
+                    break
+            elif resp.status_code == 422:
+                self.logger.info("Limit of pages exceeded...")
 
+                break
+            else:
+                self.logger.critical('Unexpected Error...')
+                exit()
+            
     def run(self, file):
         # Execute the complete workflow
         try:
@@ -221,10 +246,14 @@ class Bot(httpx.Client):
                 values = self.get_bulk_ids(import_id, row_count)
                 self.delay()
                 q_id = self.search_lists(values)
-                model_ids = self.people_list(q_id)
-                if len(model_ids):
-                    list_name = input('[?] List_name? ')
-                    self.add_people_to_list(model_ids,list_name)
+                
+                ## 1st Approch
+                # model_ids = self.people_list(q_id)
+                # if len(model_ids):
+                #     list_name = input('[?] List_name? ')
+                #     self.add_people_to_list(model_ids,list_name)
+                ## 2nd Approch
+                self.go_through_list(q_id)
 
         except Exception as e:
             # Log and handle unexpected errors
