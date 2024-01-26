@@ -184,7 +184,6 @@ class Bot(httpx.Client):
         payload = {"cacheKey":self.chache_key(),"emailer_campaign_id":None,"entity_ids":model_ids,
                    "use_new_deployment_safety_check":True}
         resp = self.post(self.BASE_URL+"mixed_people/safety_check",json=payload)
-        print(resp.status_code)
         return True if resp.status_code == 200 else False
     def add_people_to_list(self, model_ids,list_name,count):
         # count = 1
@@ -216,7 +215,7 @@ class Bot(httpx.Client):
             payload = {"finder_table_layout_id":None,"finder_view_id":"5b8050d050a3893c382e9360",
                     "q_search_list_id":q_id,"prospected_by_current_team":["no"],
                     "page":page,"display_mode":"explorer_mode","per_page":25,"open_factor_names":["prospected_by_current_team"],
-                    "num_fetch_result":4,"context":"people-index-page","show_suggestions":False,
+                    "num_fetch_result":page,"context":"people-index-page","show_suggestions":False,
                     "ui_finder_random_seed":"qe3filr8o","cacheKey":self.chache_key()}
             resp = self.post(self.BASE_URL+"mixed_people/search",
                              json=payload)
@@ -224,8 +223,9 @@ class Bot(httpx.Client):
             if resp.status_code == 200:
                 model_ids = j_resp.get('model_ids',[])
                 self.add_people_to_list(model_ids,list_name,page)
-                total_page =  j_resp['pagination']['total_pages']
-                if page>=total_page:
+                
+                # total_page =  j_resp['pagination']['total_pages']
+                if page>=100:
                     break
             elif resp.status_code == 422:
                 self.logger.info("Limit of pages exceeded...")
