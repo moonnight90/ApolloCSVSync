@@ -1,11 +1,16 @@
 import os
 import time
+import string
 import httpx
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 import json
 import logging
 import random
 import getpass
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as ES
 
 
 # Configure logging
@@ -52,6 +57,7 @@ class Bot(httpx.Client):
     file_name = lambda self, file_path: os.path.basename(file_path)
     delay = lambda self: time.sleep(random.randint(4,5))
     chache_key = lambda self: int(time.time()*1000)
+    unique_code = lambda self: ''.join(random.choices(string.ascii_letters+string.digits,k=17))
     def login(self, email, password):
         # Attempt login
         login_payload = {
@@ -210,7 +216,53 @@ class Bot(httpx.Client):
                 self.logger.critical(msg="Safety Check Fails")
                 exit()
             self.delay()
-
+    def ping(self):
+        data = {
+            'app_id': 'dyws6i9m',
+            'v': '3',
+            'g': 'b2f78251325f3cfca8e557219326cf293ae80676',
+            's': 'a7508c4d-5a55-4e9c-a1e6-3e19be8ad7b5',
+            'r': '',
+            'platform': 'web',
+            'integration_type': 'js-snippet',
+            'Idempotency-Key': 'a270b111c64f1e06',
+            'internal': '{"hubspot_tracking_cookie":"95d9a65c69070041818c85d4de9d757f"}',
+            'is_intersection_booted': 'false',
+            'page_title': 'People - Apollo',
+            'user_active_company_id': '-1',
+            'user_data': '{"email":"richard@toplineemail.com","user_id":"65959905ecbfce03007f1de4","user_hash":"075b862c7a0a7c8778db22da098d0aa3acbf037cd7db0988ed796cd804bb7e98"}',
+            'source': 'apiUpdate',
+            'sampling': 'false',
+            'referer': 'https://app.apollo.io/#/people?finderViewId=5b8050d050a3893c382e9360&qKeywords=atif&page=2&personTitles[]=teacher',
+            'anonymous_session': 'eWdEUDFkanlmdjZPSHdEem9YRkcwTEZVbS94YlcyZE4zeFlLYU1iSWZieTBmRVJ3ME1uQWZzVUw2NnNaMU9PMy0tTmNTL0pyT0MzZ2hQTEZELytRMVZSZz09--14ef1ec10ceafc0fe829b218ca67164e21c424db',
+            'device_identifier': 'f66b14fc-0233-4b92-9a6a-d96bd99ff716',}
+        resp = self.post("https://api-iam.intercom.io/messenger/web/ping")
+    def wait_n_ele(self,driver,selector):
+        time.sleep(1)
+        try:
+            WebDriverWait(driver,30).until(ES.visibility_of_element_located((By.CSS_SELECTOR,selector)))
+            return driver.find_element(By.CSS_SELECTOR,selector)
+        except: return None
+    def load_browser(self,q_id):
+        driver = webdriver.Chrome()
+        driver.get('https://app.apollo.io')
+        for key in self.cookies:
+            driver.add_cookie({"name": key, "value": self.cookies[key]})
+        page = 1
+        while page<=5:
+            driver.get(f'https://app.apollo.io/#/people?finderViewId=5b6dfc5a73f47568b2e5f11c&qSearchListId={q_id}&prospectedByCurrentTeam[]=no&page={page}')
+            driver.implicitly_wait(1)
+            self.delay()
+            self.wait_n_ele(driver,'button.finder-select-multiple-entities-button').click()
+            self.wait_n_ele(driver,'a.zp-menu-item').click()
+            self.wait_n_ele(driver,'button.zp-button.zp_Yeidq').click()
+            self.wait_n_ele(driver,'input.Select-input').send_keys('Demo1')
+            self.wait_n_ele(driver,'button[type="submit"]').click()
+            while True:
+                if not driver.find_elements(By.CSS_SELECTOR,'div.zp-modal-content'):break
+                time.sleep(1)
+            page +=1
+        
     def run(self, file):
         # Execute the complete workflow
         try:
@@ -221,10 +273,11 @@ class Bot(httpx.Client):
                 values = self.get_bulk_ids(import_id, row_count)
                 self.delay()
                 q_id = self.search_lists(values)
-                model_ids = self.people_list(q_id)
-                if len(model_ids):
-                    list_name = input('[?] List_name? ')
-                    self.add_people_to_list(model_ids,list_name)
+                self.load_browser(q_id)
+                # model_ids = self.people_list(q_id)
+                # if len(model_ids):
+                #     list_name = input('[?] List_name? ')
+                #     self.add_people_to_list(model_ids,list_name)
 
         except Exception as e:
             # Log and handle unexpected errors

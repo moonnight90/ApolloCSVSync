@@ -1,41 +1,48 @@
 # ApolloCSVSync
 
-This Python script utilizes the Apollo API to automate the process of importing and analyzing CSV files into the Apollo platform. The script is designed to perform the following tasks:
-
-1. **Login**: Authenticate with the Apollo API using the provided email and password.
-2. **Analyze File**: Upload a CSV file and analyze its structure to extract relevant information such as column headers and attachment ID.
-3. **Import File**: Initiate the import process for the analyzed CSV file, including specifying import settings and mapping CSV columns to Apollo fields.
-4. **Retrieve Bulk IDs**: Fetch organization IDs for the imported data.
-5. **Search Lists**: Search for existing lists in Apollo using the retrieved organization IDs.
-6. **Retrieve People**: Retrieve a list of people associated with the organization IDs.
-7. **Add People to List**: Add the retrieved people to a specified list.
+This Python script is designed to interact with the [Apollo.io](https://app.apollo.io/) API and automate certain tasks related to data import and user interactions. The script utilizes the [httpx](https://www.python-httpx.org/) library for HTTP requests and [Selenium](https://www.selenium.dev/) for browser automation.
 
 ## Prerequisites
-- Python 3.x
-- Required Python packages: `httpx`, `requests_toolbelt`
+
+Before running the script, ensure you have the following prerequisites installed:
+
+- [Python](https://www.python.org/) (3.6 or higher)
+- [Chrome WebDriver](https://sites.google.com/chromium.org/driver/) (ensure it's in your system's PATH)
+
+## Installation
+
+1. Install the required Python packages:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 ## Usage
-1. Install the required packages:
 
-    ```bash
-    pip install -r requirements.txt
-    ```
+1. Open a terminal and navigate to the directory where the script is located.
 
 2. Run the script:
 
-    ```bash
-    python main.py
-    ```
+   ```bash
+   python main.py
+   ```
 
-3. Follow the prompts to enter your Apollo credentials, file path, and list name.
+3. Follow the prompts to input your email, password, and file path.
 
-**Note:** Ensure that you have valid Apollo credentials and the necessary permissions to perform the specified actions.
+4. The script will then perform the following actions:
+   - Log in to the Apollo.io platform.
+   - Analyze a CSV file.
+   - Import the file's data into the platform.
+   - Retrieve bulk IDs from the imported data.
+   - Search for lists using the retrieved values.
+   - Interact with the Apollo.io web interface using Selenium:
+     - Load the browser and navigate to a specific page.
+     - Perform a series of actions in the browser.
 
-## Configuration
-- The `main_headers` dictionary in the script contains the default HTTP headers used for API requests. Update these headers if needed.
+## Notes
 
-## Disclaimer
-This script is provided as-is and may require adjustments based on changes to the Apollo API or specific use cases. Use it responsibly and adhere to Apollo's terms of service.
+- The script utilizes the Apollo.io API for data import and retrieval.
+- Browser automation is performed using Selenium, so ensure that Chrome WebDriver is installed and accessible.
+- The script logs in with the provided email and password and performs a series of automated actions on the platform.
 
-## License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+**Disclaimer:** Use this script responsibly and in compliance with the terms of service of the platforms you are interacting with. Automated actions may have implications, and excessive use could lead to account restrictions.
