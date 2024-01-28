@@ -243,13 +243,15 @@ class Bot(httpx.Client):
             WebDriverWait(driver,30).until(ES.visibility_of_element_located((By.CSS_SELECTOR,selector)))
             return driver.find_element(By.CSS_SELECTOR,selector)
         except: return None
-    def load_browser(self,q_id,list_name):
-        driver = webdriver.Chrome()
+    def load_browser(self,q_id,list_name,total_pages):
+        options = webdriver.ChromeOptions()
+        options.add_argument('--start-maximized')
+        driver = webdriver.Chrome(options=options)
         driver.get('https://app.apollo.io')
         for key in self.cookies:
             driver.add_cookie({"name": key, "value": self.cookies[key]})
         page = 1
-        while page<=5:
+        while page<=int(total_pages):
             driver.get(f'https://app.apollo.io/#/people?finderViewId=5b6dfc5a73f47568b2e5f11c&qSearchListId={q_id}&prospectedByCurrentTeam[]=no&page={page}')
             driver.implicitly_wait(1)
             self.delay()
@@ -274,7 +276,8 @@ class Bot(httpx.Client):
                 self.delay()
                 q_id = self.search_lists(values)
                 list_name = input('[?] List_name? ')
-                self.load_browser(q_id,list_name)
+                total_page = input("[?] Total pages? ")
+                self.load_browser(q_id,list_name,total_page)
                 # model_ids = self.people_list(q_id)
                 # if len(model_ids):
                 #     list_name = input('[?] List_name? ')
