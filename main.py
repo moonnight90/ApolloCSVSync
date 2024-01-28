@@ -243,7 +243,7 @@ class Bot(httpx.Client):
             WebDriverWait(driver,30).until(ES.visibility_of_element_located((By.CSS_SELECTOR,selector)))
             return driver.find_element(By.CSS_SELECTOR,selector)
         except: return None
-    def load_browser(self,q_id):
+    def load_browser(self,q_id,list_name):
         driver = webdriver.Chrome()
         driver.get('https://app.apollo.io')
         for key in self.cookies:
@@ -256,7 +256,7 @@ class Bot(httpx.Client):
             self.wait_n_ele(driver,'button.finder-select-multiple-entities-button').click()
             self.wait_n_ele(driver,'a.zp-menu-item').click()
             self.wait_n_ele(driver,'button.zp-button.zp_Yeidq').click()
-            self.wait_n_ele(driver,'input.Select-input').send_keys('Demo1')
+            self.wait_n_ele(driver,'input.Select-input').send_keys(list_name)
             self.wait_n_ele(driver,'button[type="submit"]').click()
             while True:
                 if not driver.find_elements(By.CSS_SELECTOR,'div.zp-modal-content'):break
@@ -273,7 +273,8 @@ class Bot(httpx.Client):
                 values = self.get_bulk_ids(import_id, row_count)
                 self.delay()
                 q_id = self.search_lists(values)
-                self.load_browser(q_id)
+                list_name = input('[?] List_name? ')
+                self.load_browser(q_id,list_name)
                 # model_ids = self.people_list(q_id)
                 # if len(model_ids):
                 #     list_name = input('[?] List_name? ')
