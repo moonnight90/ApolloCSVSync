@@ -263,6 +263,7 @@ class Bot(httpx.Client):
             while True:
                 if not driver.find_elements(By.CSS_SELECTOR,'div.zp-modal-content'):break
                 time.sleep(1)
+            self.logger.info(f"ADDED: Page {page} added...")
             page +=1
         
     def run(self, file):
