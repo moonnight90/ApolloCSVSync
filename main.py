@@ -11,7 +11,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ES
-
+from urllib.parse import parse_qs, urlencode, urlparse
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s',datefmt='%Y-%m-%d %H:%M:%S')
@@ -58,6 +58,7 @@ class Bot(httpx.Client):
     delay = lambda self: time.sleep(random.randint(4,5))
     chache_key = lambda self: int(time.time()*1000)
     unique_code = lambda self: ''.join(random.choices(string.ascii_letters+string.digits,k=17))
+
     def login(self, email, password):
         # Attempt login
         login_payload = {
@@ -243,6 +244,21 @@ class Bot(httpx.Client):
             WebDriverWait(driver,30).until(ES.visibility_of_element_located((By.CSS_SELECTOR,selector)))
             return driver.find_element(By.CSS_SELECTOR,selector)
         except: return None
+    
+    def url_params_to_dict(self,url):
+        # Parse the URL and extract the query parameters
+        parsed_url = urlparse(url)
+        query_params = parse_qs(parsed_url.query)
+
+        # Convert the query parameters to a dictionary
+        params_dict = {key: value[0] for key, value in query_params.items()}
+
+        return params_dict
+    def dict_to_url_params(self,params_dict):
+        # Convert the dictionary to URL-encoded parameters
+        url_params = urlencode(params_dict, doseq=True)
+
+        return url_params
     def load_browser(self,q_id,list_name,total_pages):
         options = webdriver.ChromeOptions()
         options.add_argument('--start-maximized')
@@ -251,14 +267,23 @@ class Bot(httpx.Client):
         for key in self.cookies:
             driver.add_cookie({"name": key, "value": self.cookies[key]})
         page = 1
+        url = f'https://app.apollo.io/#/people?finderViewId=5b6dfc5a73f47568b2e5f11c&qSearchListId={q_id}&page={page}'
+        driver.get(url)
+        
+        input('Apply Filter then press any key to continue')
+        
+        params = self.url_params_to_dict("https://g.com?"+driver.current_url.split('?')[1])
+        
+
         while page<=int(total_pages):
-            driver.get(f'https://app.apollo.io/#/people?finderViewId=5b6dfc5a73f47568b2e5f11c&qSearchListId={q_id}&prospectedByCurrentTeam[]=no&page={page}')
+            params['page'] = page
+            driver.get("https://app.apollo.io/#/people?"+self.dict_to_url_params(params))
             driver.implicitly_wait(1)
             self.delay()
             self.wait_n_ele(driver,'button.finder-select-multiple-entities-button').click()
             self.wait_n_ele(driver,'a.zp-menu-item').click()
             self.wait_n_ele(driver,'button.zp-button.zp_Yeidq').click()
-            self.wait_n_ele(driver,'input.Select-input').send_keys(list_name)
+            self.wait_n_ele(driver,'div[role="dialog"] input.Select-input').send_keys(list_name)
             self.wait_n_ele(driver,'button[type="submit"]').click()
             while True:
                 if not driver.find_elements(By.CSS_SELECTOR,'div.zp-modal-content'):break
